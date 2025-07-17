@@ -55,9 +55,11 @@ class Decoder : public ::sophon_stream::common::NoCopyable {
 
   double mFps;
   int mSampleInterval;
+  std::shared_ptr<bm_image> emptyImage;
   ChannelOperateRequest::SampleStrategy mSampleStrategy;
 
   // camera synchronization
+  bool cameraStatus = true;
   static std::mutex decoder_mutex;
   static std::condition_variable decoder_cv;
   static int numThreadsReady;

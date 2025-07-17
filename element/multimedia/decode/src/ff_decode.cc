@@ -803,7 +803,7 @@ std::shared_ptr<bm_image> VideoDecFFM::grab(int& frameId, int& eof,
     }
   }
   frameId = frame_id++;
-  if (1 == eof) return spBmImage;
+  if (!avframe) return spBmImage;
 
   timeval pt;
   gettimeofday(&pt, NULL);

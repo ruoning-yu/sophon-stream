@@ -102,6 +102,15 @@ common::ErrorCode Decoder::init(int graphId,
       mRoi.crop_h = request.roi.crop_h;
     }
 
+    // 创建空图像
+    emptyImage = std::make_shared<bm_image>();
+    bm_image_create(m_handle, 1440, 2560, FORMAT_BGR_PACKED, DATA_TYPE_EXT_1N_BYTE, &*emptyImage);
+    auto ret = bm_image_alloc_dev_mem_heap_mask(*emptyImage, USEING_MEM_HEAP1);
+    void *sys[3];
+    sys[0]=new char[int(2560*1440*3)];
+    memset(sys[0],0,int(2560*1440*3));
+    bm_image_copy_host_to_device(*emptyImage, sys);
+
     // 获取线程数
     if (mSourceType == ChannelOperateRequest::SourceType::CAMERA){
       numThreadsTotal.fetch_add(1);
@@ -279,10 +288,17 @@ common::ErrorCode Decoder::process(
         decoder_cv.wait(lock);
       }
     }
-    spBmImage =
-        decoder.grab(frame_id, eof, pts, mSampleInterval, mSampleStrategy);
-   
 
+    if(cameraStatus){
+        spBmImage = decoder.grab(frame_id, eof, pts, mSampleInterval, mSampleStrategy);
+        if (!spBmImage){
+            cameraStatus = false;
+            spBmImage = emptyImage;
+        }
+    }else{
+        spBmImage = emptyImage;
+    }
+    
     objectMetadata = std::make_shared<common::ObjectMetadata>();
     objectMetadata->mFrame = std::make_shared<common::Frame>();
     objectMetadata->mFrame->mHandle = m_handle;
